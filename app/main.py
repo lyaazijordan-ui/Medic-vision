@@ -4,6 +4,73 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+st.markdown("""
+<style>
+
+/* 🌑 Background */
+.stApp {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+}
+
+/* 🧠 Titles */
+h1, h2, h3 {
+    color: #38bdf8;
+    font-weight: 700;
+}
+
+/* 📦 Cards */
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    margin-bottom: 20px;
+}
+
+/* 🔘 Buttons */
+button {
+    border-radius: 12px !important;
+    background: linear-gradient(90deg, #38bdf8, #6366f1);
+    color: white !important;
+    font-weight: bold;
+    border: none;
+}
+
+/* 📥 Input box */
+.stTextInput input {
+    border-radius: 10px !important;
+    padding: 10px;
+}
+
+/* 📂 File uploader */
+.stFileUploader {
+    border: 2px dashed #38bdf8;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+/* 📊 Dataframe */
+[data-testid="stDataFrame"] {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* ✨ Hover glow effect */
+button:hover {
+    transform: scale(1.05);
+    transition: 0.2s ease;
+}
+
+</style>
+""", unsafe_allow_html=True)
+st.markdown(f"""
+<div class="card">
+{insight}
+</div>
+""", unsafe_allow_html=True)
+
 st.set_page_config(page_title="Elai AI Data Lab", layout="wide")
 
 # --------- CUSTOM CSS (THE MAGIC) ----------
