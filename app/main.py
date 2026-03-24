@@ -3,6 +3,8 @@ from app.ai_engine import generate_insight, medical_analysis, query_ai
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
+API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 st.markdown("""
 <style>
