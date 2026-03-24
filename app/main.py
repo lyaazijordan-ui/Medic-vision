@@ -1,3 +1,4 @@
+from app.ai_engine import generate_insight, medical_analysis, query_ai
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -81,6 +82,12 @@ if uploaded_file:
         fig = px.strip(df, x=x, y=y)
 
     st.plotly_chart(fig, use_container_width=True)
+    if st.button("🧠 Generate AI Insight"):
+    insight = generate_insight(df, y)
+    st.success(insight)
+    if st.button("🧬 Run Medical Analysis"):
+    result = medical_analysis(df)
+    st.warning(result)
 
     # --------- INSIGHTS ----------
     st.markdown("## 🤖 AI Insights")
@@ -92,3 +99,10 @@ if uploaded_file:
     • Trend: {'Increasing' if df[y].iloc[-1] > df[y].iloc[0] else 'Decreasing'}
     </div>
     """, unsafe_allow_html=True)
+    st.markdown("## 🤖 Chat with your Data")
+
+user_input = st.text_input("Ask something about your data")
+
+if user_input:
+    response = query_ai(user_input)
+    st.write(response)
