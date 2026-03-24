@@ -1,7 +1,7 @@
 import requests
 
 API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
-HEADERS = {"Authorization": "Bearer YOUR_API_KEY"}
+HEADERS = {"Authorization": "Bearer HF_API_KEY"}
 
 def query_ai(prompt):
     response = requests.post(API_URL, headers=HEADERS, json={"inputs": prompt})
