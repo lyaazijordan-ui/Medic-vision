@@ -39,3 +39,13 @@ def medical_analysis(df):
     """
 
     return query_ai(prompt)
+    prompt = f"""
+You are an expert data scientist and medical analyst.
+
+Explain clearly:
+- trends
+- risks
+- recommendations
+
+Be professional but simple.
+"""
