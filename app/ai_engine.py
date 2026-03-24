@@ -1,7 +1,9 @@
 import requests
+import os
+API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
-HEADERS = {"Authorization": "Bearer HF_API_KEY"}
+HEADERS = {"Authorization": "Bearer HUGGINGFACE_API_KEY"}
 
 def query_ai(prompt):
     response = requests.post(API_URL, headers=HEADERS, json={"inputs": prompt})
