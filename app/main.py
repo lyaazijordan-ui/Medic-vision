@@ -86,6 +86,15 @@ if uploaded_file:
    
     if st.button("🔮 Predict Future"):
     preds = predict_future(df, y)
+    if st.button("📄 Generate Report"):
+    insights = generate_insight(df, y)
+    preds = predict_future(df, y)
+    anomalies = detect_anomalies(df, y)
+
+    generate_pdf("report.pdf", insights, preds, anomalies)
+
+    with open("report.pdf", "rb") as f:
+        st.download_button("⬇️ Download Report", f, "AI_Report.pdf")
 
     st.write("### 📈 Future Predictions")
     st.write(preds)
