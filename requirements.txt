@@ -1,7 +1,9 @@
-scikit-learn
-numpy
 streamlit
 pandas
 plotly
-openpyxl
 requests
+openpyxl
+scikit-learn
+numpy
+reportlab
+
