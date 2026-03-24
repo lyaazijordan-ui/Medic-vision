@@ -1,3 +1,4 @@
+from app.data_engine import predict_future, detect_anomalies
 from app.ai_engine import generate_insight, medical_analysis, query_ai
 import streamlit as st
 import pandas as pd
@@ -82,12 +83,41 @@ if uploaded_file:
         fig = px.strip(df, x=x, y=y)
 
     st.plotly_chart(fig, use_container_width=True)
+   
+    if st.button("🔮 Predict Future"):
+    preds = predict_future(df, y)
+
+    st.write("### 📈 Future Predictions")
+    st.write(preds)
+
+    import plotly.graph_objects as go
+
+    fig2 = go.Figure()
+
+    fig2.add_trace(go.Scatter(y=df[y], mode='lines', name='Actual'))
+    fig2.add_trace(go.Scatter(
+        x=list(range(len(df), len(df)+len(preds))),
+        y=preds,
+        mode='lines',
+        name='Predicted'
+    ))
+
+    st.plotly_chart(fig2, use_container_width=True)
     if st.button("🧠 Generate AI Insight"):
     insight = generate_insight(df, y)
     st.success(insight)
     if st.button("🧬 Run Medical Analysis"):
     result = medical_analysis(df)
     st.warning(result)
+    if st.button("🚨 Detect Anomalies"):
+    anomalies = detect_anomalies(df, y)
+    st.warning("⚠️ Unusual pattern detected. This may indicate risk in the dataset.")
+
+    if anomalies.empty:
+        st.success("No anomalies detected ✅")
+    else:
+        st.error("Anomalies detected!")
+        st.dataframe(anomalies)
 
     # --------- INSIGHTS ----------
     st.markdown("## 🤖 AI Insights")
