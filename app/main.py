@@ -2,16 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import plotnine as p9
+import matplotlib.pyplot as plt
 import os
 
-# Import custom modules (Local imports since main.py is in the app folder)
+# Import custom modules
 from data_engine import predict_future, detect_anomalies
 from ai_engine import generate_insight, medical_analysis, query_ai, generate_pdf
 
 # 1. PAGE CONFIG (MUST BE FIRST)
 st.set_page_config(page_title="Intellectual Data Lab", layout="wide")
 
-# 2. CUSTOM CSS
+# 2. CUSTOM CSS FOR DARK MODE & CARDS
 st.markdown("""
 <style>
     .stApp {
@@ -35,24 +37,19 @@ st.markdown("""
         color: white !important;
         font-weight: bold;
         border: none;
-        transition: 0.3s;
-    }
-    .stButton>button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --------- HEADER ----------
 st.title("🧠 Intellectual Data Lab")
-st.caption("Advanced Analytics & AI-Driven Insights")
+st.caption("Precision Analytics | AI-Driven Insights | Statistical Visualization")
 
 # --------- FILE UPLOAD ----------
 uploaded_file = st.file_uploader("Upload your dataset (CSV or Excel)", type=["csv", "xlsx"])
 
 if uploaded_file:
-    # Logic to handle file types
+    # Load Data
     if uploaded_file.name.endswith('.csv'):
         df = pd.read_csv(uploaded_file)
     else:
@@ -61,103 +58,107 @@ if uploaded_file:
     st.markdown("### 📊 Data Preview")
     st.dataframe(df, use_container_width=True)
 
-    # Get numeric columns for plotting
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
 
     if not numeric_cols:
-        st.warning("No numeric columns found for visualization. Please upload a dataset with numbers.")
+        st.warning("Please upload a dataset with numeric values for full analysis.")
     else:
-        # --------- GRAPH SECTION ----------
-        st.markdown("## 📈 Visualizations")
-        col_x, col_y, col_type = st.columns([1, 1, 1])
+        # --------- VISUALIZATION SECTION ----------
+        st.markdown("## 📈 Interactive Visuals (Plotly)")
+        col_x, col_y, col_type = st.columns(3)
 
         with col_x:
             x_axis = st.selectbox("Select X-axis", df.columns)
         with col_y:
             y_axis = st.selectbox("Select Y-axis", numeric_cols)
         with col_type:
-            graph_type = st.selectbox("Choose Graph Type", [
-                "Line", "Bar", "Scatter", "Histogram", "Box", 
-                "Area", "Pie", "Violin"
-            ])
+            graph_type = st.selectbox("Choose Graph Type", ["Line", "Bar", "Scatter", "Box", "Area"])
 
-        # Plotly logic
+        # Plotly Render
         if graph_type == "Line": fig = px.line(df, x=x_axis, y=y_axis)
         elif graph_type == "Bar": fig = px.bar(df, x=x_axis, y=y_axis)
         elif graph_type == "Scatter": fig = px.scatter(df, x=x_axis, y=y_axis)
-        elif graph_type == "Histogram": fig = px.histogram(df, x=x_axis)
         elif graph_type == "Box": fig = px.box(df, x=x_axis, y=y_axis)
-        elif graph_type == "Area": fig = px.area(df, x=x_axis, y=y_axis)
-        elif graph_type == "Pie": fig = px.pie(df, names=x_axis, values=y_axis)
-        else: fig = px.violin(df, x=x_axis, y=y_axis)
-
+        else: fig = px.area(df, x=x_axis, y=y_axis)
+        
         st.plotly_chart(fig, use_container_width=True)
 
-        # --------- ACTION BUTTONS ----------
-        st.markdown("## ⚙️ Data Operations")
+        # --------- PLOTNINE SECTION (STATISTICAL COLORS) ----------
+        st.markdown("## 🎨 Statistical Distribution (Plotnine)")
+        col_p1, col_p2 = st.columns([2, 1])
+        
+        with col_p2:
+            st.write("### Plot Settings")
+            color_theme = st.selectbox("Color Palette", ["viridis", "magma", "inferno", "plasma", "cividis"])
+            plot_btn = st.button("Generate Heatmap Distribution")
+
+        with col_p1:
+            if plot_btn:
+                # Plotnine Logic
+                p = (
+                    p9.ggplot(df, p9.aes(x=x_axis, y=y_axis, color=y_axis))
+                    + p9.geom_point(alpha=0.7, size=3)
+                    + p9.theme_minimal()
+                    + p9.scale_color_cmap(cmap_name=color_theme)
+                    + p9.labs(title=f"Distribution of {y_axis} vs {x_axis}")
+                    + p9.theme(figure_size=(8, 4))
+                )
+                st.pyplot(p9.ggplot.draw(p))
+
+        # --------- ACTION TILES ----------
+        st.markdown("## ⚙️ Intelligence Suite")
         btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
 
         with btn_col1:
-            if st.button("🔮 Predict Future"):
-                preds = predict_future(df, y_axis)
-                st.session_state['preds'] = preds
-                st.success("Predictions Generated!")
+            if st.button("🔮 Predict"):
+                st.session_state['preds'] = predict_future(df, y_axis)
 
         with btn_col2:
-            if st.button("🚨 Detect Anomalies"):
-                anomalies = detect_anomalies(df, y_axis)
-                st.session_state['anomalies'] = anomalies
-                st.warning("Anomaly Scan Complete.")
+            if st.button("🚨 Anomalies"):
+                st.session_state['anomalies'] = detect_anomalies(df, y_axis)
 
         with btn_col3:
-            if st.button("🧬 Medical Analysis"):
-                med_result = medical_analysis(df)
-                st.session_state['med_analysis'] = med_result
-                st.info("Medical Insights Ready.")
+            if st.button("🧬 Medical"):
+                st.session_state['med'] = medical_analysis(df)
 
         with btn_col4:
-            if st.button("📄 Generate PDF Report"):
-                # Collecting current states for the PDF
+            if st.button("📄 Export PDF"):
                 ins = generate_insight(df, y_axis)
                 pre = predict_future(df, y_axis)
                 ano = detect_anomalies(df, y_axis)
-                generate_pdf("Intellectual_Report.pdf", ins, pre, ano)
-                with open("Intellectual_Report.pdf", "rb") as f:
-                    st.download_button("⬇️ Download Report", f, "Intellectual_Report.pdf")
+                generate_pdf("Intellectual_Analysis.pdf", ins, pre, ano)
+                with open("Intellectual_Analysis.pdf", "rb") as f:
+                    st.download_button("⬇️ Download", f, "Intellectual_Analysis.pdf")
 
-        # --------- DISPLAY RESULTS ----------
+        # Display results from session state
         if 'preds' in st.session_state:
-            st.write("### 📈 Future Predictions")
-            st.write(st.session_state['preds'])
-            
+            st.write("### 🔮 Predictions", st.session_state['preds'])
         if 'anomalies' in st.session_state:
-            st.write("### ⚠️ Detected Anomalies")
-            st.dataframe(st.session_state['anomalies'])
+            st.write("### 🚨 Anomalies", st.session_state['anomalies'])
+        if 'med' in st.session_state:
+            st.info(st.session_state['med'])
 
-        if 'med_analysis' in st.session_state:
-            st.markdown(f'<div class="card"><strong>Medical Analysis:</strong><br>{st.session_state["med_analysis"]}</div>', unsafe_allow_html=True)
-
-    # --------- INSIGHTS SUMMARY CARD ----------
-    st.markdown("## 🤖 Dataset Summary")
+    # --------- SUMMARY CARD ----------
     st.markdown(f"""
     <div class="card">
-    • <strong>Rows:</strong> {df.shape[0]} | <strong>Columns:</strong> {df.shape[1]}<br>
-    • <strong>Analysis Target:</strong> {y_axis if numeric_cols else 'N/A'}<br>
-    • <strong>Current Trend:</strong> {'Calculating...' if not numeric_cols else ('Increasing' if df[y_axis].iloc[-1] > df[y_axis].iloc[0] else 'Decreasing')}
+    <strong>Dataset Intelligence Summary</strong><br>
+    Rows: {df.shape[0]} | Columns: {df.shape[1]}<br>
+    Primary Metric: {y_axis if numeric_cols else 'N/A'}<br>
+    Status: Data processed successfully.
     </div>
     """, unsafe_allow_html=True)
 
 # --------- CHAT SECTION ----------
 st.markdown("---")
 st.markdown("## 💬 Chat with Intellectual AI")
-user_query = st.text_input("Ask a specific question about this dataset:")
+user_query = st.text_input("Ask a question about your data (e.g., 'What is the trend here?')")
 
 if user_query:
     if uploaded_file is not None:
-        # Context building for the AI
-        data_context = f"Dataset has {df.shape[0]} rows. Columns: {list(df.columns)}. Target column: {y_axis if numeric_cols else 'None'}."
-        with st.spinner("Analyzing data..."):
-            ai_response = query_ai(user_query, data_context=data_context)
-            st.chat_message("assistant").write(ai_response)
+        # Build context so AI "sees" your data
+        ctx = f"Data has {df.shape[0]} rows. Columns: {list(df.columns)}. Focus column: {y_axis if numeric_cols else 'None'}."
+        with st.spinner("AI is analyzing..."):
+            response = query_ai(user_query, data_context=ctx)
+            st.chat_message("assistant").write(response)
     else:
-        st.error("Please upload a file first so I can assist you with the data!")
+        st.error("Please upload a dataset first.")
