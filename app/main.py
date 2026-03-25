@@ -145,4 +145,12 @@ user_input = st.text_input("Ask something about your data")
 if user_input:
     response = query_ai(user_input)
     st.write(response)
+# In main.py
+if user_input:
+    # Create a small summary of the data so the AI knows what you are talking about
+    data_summary = f"The dataset has {df.shape[0]} rows. Columns: {list(df.columns)}. Focus column: {y}"
     
+    # Pass both the question AND the summary
+    response = query_ai(user_input, data_context=data_summary)
+    st.write(response)
+
