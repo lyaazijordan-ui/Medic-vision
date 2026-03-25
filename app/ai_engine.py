@@ -6,14 +6,14 @@ from fpdf import FPDF
 API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
-# We use a stable v0.2 URL and a Llama-3 Fallback to avoid 404 errors
+# 2026 Router Endpoints (Stable Aliases)
 API_URL = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2"
-FALLBACK_URL = "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct"
+FALLBACK_URL = "https://router.huggingface.co/hf-inference/models/HuggingFaceH4/zephyr-7b-beta"
 
 def query_ai(prompt, data_context=""):
-    """Sends a prompt to the AI with an automatic fallback if a model is 404 (Offline)."""
+    """Sends a prompt to the AI with an automatic fallback if a model is Offline."""
     if not API_KEY:
-        return "Error: API Key missing. Please set HUGGINGFACE_API_KEY."
+        return "Error: API Key missing. Please set HUGGINGFACE_API_KEY in your environment."
 
     full_prompt = f"<s>[INST] Context: {data_context}\n\nQuestion: {prompt} [/INST]"
     payload = {
@@ -22,15 +22,14 @@ def query_ai(prompt, data_context=""):
     }
 
     try:
-        # Attempt Primary Model
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=20)
         
-        # If 404 or 503, try Fallback
+        # Fallback logic for 404/503/500 errors
         if response.status_code in [404, 503, 500]:
             response = requests.post(FALLBACK_URL, headers=HEADERS, json=payload, timeout=20)
 
         if response.status_code != 200:
-            return f"AI Router Error ({response.status_code}). The models are currently unavailable."
+            return f"AI Router Error ({response.status_code}). Please try again in a few seconds."
 
         result = response.json()
         if isinstance(result, list) and len(result) > 0:
@@ -41,21 +40,36 @@ def query_ai(prompt, data_context=""):
         return f"Connection Error: {str(e)}"
 
 def generate_insight(df, column):
+    """Generates an automated summary insight."""
     summary = f"Column '{column}' - Mean: {df[column].mean():.2f}, Max: {df[column].max()}."
     return query_ai(f"Give a short expert insight on these stats: {summary}")
 
 def medical_analysis(df):
+    """Specialized medical data check."""
     cols = list(df.columns)
-    prompt = f"Analyze these medical data headers for risks: {cols}. Disclaimer: Not medical advice."
+    prompt = f"Identify potential health-related risks or trends in these data headers: {cols}. Disclaimer: Not medical advice."
     return query_ai(prompt)
 
 def generate_pdf(filename, insights, preds, anomalies):
+    """Creates a branded PDF report."""
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "Intellectual Data Lab Report", ln=True, align='C')
+    pdf.set_font("Arial", 'B', 18)
+    pdf.set_text_color(56, 189, 248) 
+    pdf.cell(0, 15, "Intellectual Data Lab - Analysis Report", ln=True, align='C')
     pdf.ln(10)
+    
+    pdf.set_font("Arial", 'B', 14)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 10, "1. AI Insights", ln=True)
     pdf.set_font("Arial", size=11)
-    content = f"Insights: {insights}\n\nPredictions: {preds}\n\nAnomalies: {anomalies}"
+    pdf.multi_cell(0, 8, str(insights))
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "2. Statistical Findings", ln=True)
+    pdf.set_font("Arial", size=11)
+    content = f"Predictions: {preds}\n\nAnomalies: {anomalies}"
     pdf.multi_cell(0, 8, content)
+    
     pdf.output(filename)
