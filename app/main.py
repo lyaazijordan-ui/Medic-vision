@@ -5,8 +5,8 @@ import plotly.graph_objects as go
 import os
 
 # Import custom modules
-from app.data_engine import predict_future, detect_anomalies
-from app.ai_engine import generate_insight, medical_analysis, query_ai, generate_pdf
+from data_engine import predict_future, detect_anomalies
+from ai_engine import generate_insight, medical_analysis, query_ai, generate_pdf
 
 # 1. MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(page_title="Elai AI Data Lab", layout="wide")
