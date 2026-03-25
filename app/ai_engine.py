@@ -3,51 +3,54 @@ import os
 from fpdf import FPDF
 
 # 1. SETUP & CONFIGURATION
-API_KEY = os.getenv("HUGGINGFACE_API_KEY")
-HEADERS = {"Authorization": f"Bearer {API_KEY}"}
+API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# A list of the 3 most stable "Router" endpoints in 2026 to avoid 404 errors
-MODEL_ENDPOINTS = [
-    "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2",
-    "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
-    "https://router.huggingface.co/hf-inference/models/google/gemma-2-9b-it"
+FALLBACK_MODELS = [
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "google/gemma-2-9b-it:free",
+    "mistralai/mistral-7b-instruct:free"
 ]
 
 def query_ai(prompt, data_context=""):
-    """Cycles through multiple stable models if one returns a 404/Offline error."""
+    """Query OpenRouter API with intelligent fallback."""
     if not API_KEY:
-        return "Error: API Key missing. Please set HUGGINGFACE_API_KEY in your environment."
+        return "Error: API Key missing. Please set OPENROUTER_API_KEY in your environment."
 
-    full_prompt = f"<s>[INST] Context: {data_context}\n\nQuestion: {prompt} [/INST]"
-    payload = {
-        "inputs": full_prompt,
-        "parameters": {
-            "max_new_tokens": 500, 
-            "temperature": 0.7, 
-            "return_full_text": False
-        }
+    full_prompt = f"Context: {data_context}\n\nQuestion: {prompt}"
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://intellectual-data-lab.app",
+        "X-Title": "Intellectual Data Lab"
     }
 
-    # Attempt to find a working model
-    for url in MODEL_ENDPOINTS:
+    for model in FALLBACK_MODELS:
         try:
-            response = requests.post(url, headers=HEADERS, json=payload, timeout=15)
-            
-            # If successful, return the text immediately
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "You are an expert data analyst providing insights on datasets."},
+                    {"role": "user", "content": full_prompt}
+                ],
+                "max_tokens": 500,
+                "temperature": 0.7
+            }
+
+            response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=20)
+
             if response.status_code == 200:
                 result = response.json()
-                if isinstance(result, list) and len(result) > 0:
-                    return result[0].get("generated_text", "").strip()
-                return result.get("generated_text", "").strip()
-            
-            # If 404 or 503, the loop continues to the next model in MODEL_ENDPOINTS
-            print(f"Model at {url} returned status {response.status_code}. Trying next...")
-            
-        except Exception:
-            # If connection fails, move to the next model
+                return result["choices"][0]["message"]["content"].strip()
+
+            print(f"Model {model} returned status {response.status_code}. Trying next...")
+
+        except Exception as e:
+            print(f"Error with {model}: {e}")
             continue
 
-    return "AI Error: All model endpoints in the Intellectual Data Lab are currently unreachable. Please check your internet or API key."
+    return "AI Error: All model endpoints are currently unreachable. Please check your internet or API key."
 
 def generate_insight(df, column):
     """Generates an automated summary insight."""
