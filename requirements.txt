@@ -6,4 +6,5 @@ openpyxl
 scikit-learn
 numpy
 reportlab
+fpdf
 
