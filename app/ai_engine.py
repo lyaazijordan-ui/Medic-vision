@@ -1,4 +1,25 @@
 import requests
+from fpdf import FPDF
+
+def generate_pdf(filename, insights, preds, anomalies):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(40, 10, "AI Data Analysis Report")
+    pdf.ln(10)
+    
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, f"Insights: {insights}")
+    pdf.ln(5)
+    
+    pdf.multi_cell(0, 10, f"Predictions: {preds}")
+    pdf.ln(5)
+    
+    # Check if anomalies is a DataFrame or string
+    anomalies_str = str(anomalies) if not hasattr(anomalies, 'to_string') else anomalies.to_string()
+    pdf.multi_cell(0, 10, f"Anomalies Found: {anomalies_str}")
+    
+    pdf.output(filename)
 import os
 API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
