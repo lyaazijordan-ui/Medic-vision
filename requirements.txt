@@ -9,3 +9,5 @@ reportlab
 fpdf
 plotnine
 matplotlib
+scipy
+statsmodels
