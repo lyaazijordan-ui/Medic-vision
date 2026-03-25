@@ -8,3 +8,4 @@ numpy
 reportlab
 fpdf
 plotnine
+matplotlib
